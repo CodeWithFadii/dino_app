@@ -1,11 +1,10 @@
-import 'dart:developer';
 import 'package:flame/camera.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'widgets/hud.dart';
 import 'game/dino_run.dart';
 import 'models/settings.dart';
@@ -15,34 +14,12 @@ import 'widgets/pause_menu.dart';
 import 'widgets/settings_menu.dart';
 import 'widgets/game_over_menu.dart';
 
-AppOpenAd? openAd;
-
-Future<void> loadAd() async {
-  await AppOpenAd.load(
-    adUnitId: 'ca-app-pub-3940256099942544/9257395921',
-    request: const AdRequest(),
-    adLoadCallback: AppOpenAdLoadCallback(
-      onAdLoaded: (ad) {
-        log('ad is loaded');
-        openAd = ad;
-        openAd!.show();
-      },
-      onAdFailedToLoad: (error) {
-        log('ad failed to load $error');
-      },
-    ),
-  );
-}
-
 Future<void> main() async {
   // Ensures that all bindings are initialized
   // before was start calling hive and flame code
   // dealing with platform channels.
   WidgetsFlutterBinding.ensureInitialized();
-
-  await MobileAds.instance.initialize();
-
-  await loadAd();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
 
   // Initializes hive and register the adapters.
   await initHive();
@@ -88,10 +65,7 @@ class DinoRunApp extends StatelessWidget {
           // This will dislpay a loading bar until [DinoRun] completes
           // its onLoad method.
           loadingBuilder: (conetxt) => const Center(
-            child: SizedBox(
-              width: 200,
-              child: LinearProgressIndicator(),
-            ),
+            child: SizedBox(width: 200, child: LinearProgressIndicator()),
           ),
           // Register all the overlays that will be used by this game.
           overlayBuilderMap: {
