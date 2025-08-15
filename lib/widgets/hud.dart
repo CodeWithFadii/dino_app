@@ -48,6 +48,24 @@ class Hud extends StatelessWidget {
                     );
                   },
                 ),
+                // Coin display
+                Selector<PlayerData, int>(
+                  selector: (_, playerData) => playerData.coins,
+                  builder: (_, coins, __) {
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.monetization_on, color: Colors.white, size: 20),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$coins',
+                          style: const TextStyle(
+                              fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
             TextButton(

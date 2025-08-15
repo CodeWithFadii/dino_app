@@ -16,15 +16,19 @@ class PlayerDataAdapter extends TypeAdapter<PlayerData> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return PlayerData()..highScore = fields[1] as int;
+    return PlayerData()
+      ..highScore = fields[1] as int
+      ..coins = fields[2] as int;
   }
 
   @override
   void write(BinaryWriter writer, PlayerData obj) {
     writer
+      ..writeByte(2)
       ..writeByte(1)
-      ..writeByte(1)
-      ..write(obj.highScore);
+      ..write(obj.highScore)
+      ..writeByte(2)
+      ..write(obj.coins);
   }
 
   @override

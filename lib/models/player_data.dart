@@ -9,6 +9,9 @@ class PlayerData extends ChangeNotifier with HiveObjectMixin {
   @HiveField(1)
   int highScore = 0;
 
+  @HiveField(2)
+  int coins = 0;
+
   int _lives = 5;
 
   int get lives => _lives;
@@ -30,6 +33,27 @@ class PlayerData extends ChangeNotifier with HiveObjectMixin {
     }
 
     notifyListeners();
+    // Only save if this object is properly initialized in Hive
+    if (isInBox) {
     save();
+    }
+  }
+
+  // Method to add coins
+  void addCoins(int amount) {
+    coins += amount;
+    notifyListeners();
+    // Don't call save() here - let the caller handle Hive saving
+  }
+
+  // Method to use coins
+  bool useCoins(int amount) {
+    if (coins >= amount) {
+      coins -= amount;
+      notifyListeners();
+      // Don't call save() here - let the caller handle Hive saving
+      return true;
+    }
+    return false;
   }
 }

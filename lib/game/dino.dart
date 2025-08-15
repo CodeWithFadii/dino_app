@@ -1,7 +1,9 @@
 import 'dart:ui';
+import 'dart:math' as Math;
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flutter/material.dart';
 
 import '/game/enemy.dart';
 import '/game/dino_run.dart';
@@ -17,42 +19,8 @@ enum DinoAnimationStates {
   sprint,
 }
 
-// This represents the dino character of this game.
-class Dino extends SpriteAnimationGroupComponent<DinoAnimationStates>
-    with CollisionCallbacks, HasGameReference<DinoRun> {
-  // A map of all the animation states and their corresponding animations.
-  static final _animationMap = {
-    DinoAnimationStates.idle: SpriteAnimationData.sequenced(
-      amount: 4,
-      stepTime: 0.1,
-      textureSize: Vector2.all(24),
-    ),
-    DinoAnimationStates.run: SpriteAnimationData.sequenced(
-      amount: 6,
-      stepTime: 0.1,
-      textureSize: Vector2.all(24),
-      texturePosition: Vector2((4) * 24, 0),
-    ),
-    DinoAnimationStates.kick: SpriteAnimationData.sequenced(
-      amount: 4,
-      stepTime: 0.1,
-      textureSize: Vector2.all(24),
-      texturePosition: Vector2((4 + 6) * 24, 0),
-    ),
-    DinoAnimationStates.hit: SpriteAnimationData.sequenced(
-      amount: 3,
-      stepTime: 0.1,
-      textureSize: Vector2.all(24),
-      texturePosition: Vector2((4 + 6 + 4) * 24, 0),
-    ),
-    DinoAnimationStates.sprint: SpriteAnimationData.sequenced(
-      amount: 7,
-      stepTime: 0.1,
-      textureSize: Vector2.all(24),
-      texturePosition: Vector2((4 + 6 + 4 + 3) * 24, 0),
-    ),
-  };
-
+// This represents the custom character of this game.
+class Dino extends PositionComponent with CollisionCallbacks, HasGameReference<DinoRun> {
   // The max distance from top of the screen beyond which
   // dino should never go. Basically the screen height - ground height
   double yMax = 0.0;
@@ -68,9 +36,14 @@ class Dino extends SpriteAnimationGroupComponent<DinoAnimationStates>
   final PlayerData playerData;
 
   bool isHit = false;
+  DinoAnimationStates current = DinoAnimationStates.run;
 
-  Dino(Image image, this.playerData)
-      : super.fromFrameData(image, _animationMap);
+  // Animation variables
+  double _animationTime = 0;
+  double _bounceOffset = 0;
+  bool _isMoving = true;
+
+  Dino(this.playerData) : super(size: Vector2.all(24));
 
   @override
   void onMount() {
@@ -109,13 +82,19 @@ class Dino extends SpriteAnimationGroupComponent<DinoAnimationStates>
     if (isOnGround) {
       y = yMax;
       speedY = 0.0;
-      if ((current != DinoAnimationStates.hit) &&
-          (current != DinoAnimationStates.run)) {
+      if ((current != DinoAnimationStates.hit) && (current != DinoAnimationStates.run)) {
         current = DinoAnimationStates.run;
       }
     }
 
     _hitTimer.update(dt);
+
+    // Update animation time
+    _animationTime += dt;
+    if (_isMoving) {
+      _bounceOffset = (Math.sin(_animationTime * 8) * 2).toDouble();
+    }
+
     super.update(dt);
   }
 
@@ -151,7 +130,9 @@ class Dino extends SpriteAnimationGroupComponent<DinoAnimationStates>
     AudioManager.instance.playSfx('hurt7.wav');
     current = DinoAnimationStates.hit;
     _hitTimer.start();
-    playerData.lives -= 1;
+    if (playerData != null) {
+      playerData!.lives -= 1;
+    }
   }
 
   // This method reset some of the important properties
@@ -166,5 +147,269 @@ class Dino extends SpriteAnimationGroupComponent<DinoAnimationStates>
     current = DinoAnimationStates.run;
     isHit = false;
     speedY = 0.0;
+    _animationTime = 0;
+    _bounceOffset = 0;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+
+    final paint = Paint();
+    final center = Offset(size.x / 2, size.y / 2);
+
+    // Draw the custom character based on state
+    switch (current) {
+      case DinoAnimationStates.run:
+        _drawRunningCharacter(canvas, paint, center);
+        break;
+      case DinoAnimationStates.idle:
+        _drawIdleCharacter(canvas, paint, center);
+        break;
+      case DinoAnimationStates.hit:
+        _drawHitCharacter(canvas, paint, center);
+        break;
+      default:
+        _drawRunningCharacter(canvas, paint, center);
+    }
+  }
+
+  void _drawRunningCharacter(Canvas canvas, Paint paint, Offset center) {
+    // // Shadow
+    // paint.color = Colors.black.withOpacity(0.3);
+    // canvas.drawCircle(Offset(center.dx + 2, center.dy + 12), 10, paint);
+
+    // Body gradient (main circle)
+    final bodyGradient = RadialGradient(
+      colors: [Colors.blue.shade400, Colors.blue.shade700],
+      stops: [0.0, 1.0],
+    );
+    paint.shader = bodyGradient.createShader(Rect.fromCircle(center: center, radius: 8));
+    canvas.drawCircle(center, 8, paint);
+
+    // Body highlight
+    paint.shader = null;
+    paint.color = Colors.blue.shade200;
+    canvas.drawCircle(Offset(center.dx - 2, center.dy - 2), 3, paint);
+
+    // Eyes with better detail
+    paint.color = Colors.white;
+    canvas.drawCircle(Offset(center.dx + 2, center.dy - 2), 2.5, paint);
+    canvas.drawCircle(Offset(center.dx - 2, center.dy - 2), 2.5, paint);
+
+    // Eye shadows
+    paint.color = Colors.blue.shade800;
+    canvas.drawCircle(Offset(center.dx + 2, center.dy - 1.5), 2.5, paint);
+    canvas.drawCircle(Offset(center.dx - 2, center.dy - 1.5), 2.5, paint);
+
+    // Pupils with shine
+    paint.color = Colors.black;
+    canvas.drawCircle(Offset(center.dx + 2, center.dy - 2), 1.5, paint);
+    canvas.drawCircle(Offset(center.dx - 2, center.dy - 2), 1.5, paint);
+
+    // Eye shine
+    paint.color = Colors.white;
+    canvas.drawCircle(Offset(center.dx + 1.5, center.dy - 2.5), 0.8, paint);
+    canvas.drawCircle(Offset(center.dx - 1.5, center.dy - 2.5), 0.8, paint);
+
+    // Happy smile with gradient
+    paint.shader = LinearGradient(
+      colors: [Colors.white, Colors.blue.shade200],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ).createShader(Rect.fromCenter(center: center, width: 8, height: 8));
+    paint.style = PaintingStyle.stroke;
+    paint.strokeWidth = 2;
+    canvas.drawArc(
+      Rect.fromCenter(center: center, width: 8, height: 8),
+      0,
+      3.14,
+      false,
+      paint,
+    );
+
+    // Bouncing effect
+    final bounceCenter = Offset(center.dx, center.dy + _bounceOffset);
+
+    // Legs with gradient and shadows
+    paint.shader = LinearGradient(
+      colors: [Colors.blue.shade500, Colors.blue.shade800],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ).createShader(Rect.fromCenter(center: bounceCenter, width: 4, height: 8));
+    paint.style = PaintingStyle.fill;
+
+    // Left leg
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+            center: Offset(bounceCenter.dx - 3, bounceCenter.dy + 8), width: 2.5, height: 4),
+        const Radius.circular(1),
+      ),
+      paint,
+    );
+
+    // Right leg
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+            center: Offset(bounceCenter.dx + 3, bounceCenter.dy + 8), width: 2.5, height: 4),
+        const Radius.circular(1),
+      ),
+      paint,
+    );
+
+    // Arms with gradient
+    paint.shader = LinearGradient(
+      colors: [Colors.blue.shade400, Colors.blue.shade600],
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+    ).createShader(Rect.fromCenter(center: bounceCenter, width: 6, height: 3));
+
+    // Left arm
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+            center: Offset(bounceCenter.dx - 6, bounceCenter.dy - 2), width: 2.5, height: 3),
+        const Radius.circular(1),
+      ),
+      paint,
+    );
+
+    // Right arm
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+            center: Offset(bounceCenter.dx + 6, bounceCenter.dy - 2), width: 2.5, height: 3),
+        const Radius.circular(1),
+      ),
+      paint,
+    );
+
+    // Energy particles when running
+    if (_isMoving) {
+      paint.shader = null;
+      paint.color = Colors.cyan.withOpacity(0.8);
+      final particleOffset = (Math.sin(_animationTime * 15) * 3).toDouble();
+      canvas.drawCircle(Offset(bounceCenter.dx - 8, bounceCenter.dy + particleOffset), 1, paint);
+      canvas.drawCircle(Offset(bounceCenter.dx + 8, bounceCenter.dy - particleOffset), 1, paint);
+    }
+  }
+
+  void _drawIdleCharacter(Canvas canvas, Paint paint, Offset center) {
+    // Body (main circle)
+    paint.color = Colors.blue;
+    paint.style = PaintingStyle.fill;
+    canvas.drawCircle(center, 8, paint);
+
+    // Eyes (bigger for idle state)
+    paint.color = Colors.white;
+    canvas.drawCircle(Offset(center.dx + 2, center.dy - 2), 2.5, paint);
+    canvas.drawCircle(Offset(center.dx - 2, center.dy - 2), 2.5, paint);
+
+    // Pupils
+    paint.color = Colors.black;
+    canvas.drawCircle(Offset(center.dx + 2, center.dy - 2), 1.5, paint);
+    canvas.drawCircle(Offset(center.dx - 2, center.dy - 2), 1.5, paint);
+
+    // Surprised mouth
+    paint.color = Colors.white;
+    paint.style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(center.dx, center.dy + 2), 1.5, paint);
+
+    // Legs (straight)
+    paint.color = Colors.blue;
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(center.dx - 3, center.dy + 8), width: 2, height: 4),
+      paint,
+    );
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(center.dx + 3, center.dy + 8), width: 2, height: 4),
+      paint,
+    );
+
+    // Arms (up in the air)
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(center.dx - 6, center.dy - 4), width: 2, height: 3),
+      paint,
+    );
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(center.dx + 6, center.dy - 4), width: 2, height: 3),
+      paint,
+    );
+  }
+
+  void _drawHitCharacter(Canvas canvas, Paint paint, Offset center) {
+    // Body (main circle) - red when hit
+    paint.color = Colors.red;
+    paint.style = PaintingStyle.fill;
+    canvas.drawCircle(center, 8, paint);
+
+    // X eyes (hurt)
+    paint.color = Colors.white;
+    paint.style = PaintingStyle.stroke;
+    paint.strokeWidth = 2;
+
+    // Left X eye
+    canvas.drawLine(
+      Offset(center.dx - 3, center.dy - 3),
+      Offset(center.dx - 1, center.dy - 1),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(center.dx - 1, center.dy - 3),
+      Offset(center.dx - 3, center.dy - 1),
+      paint,
+    );
+
+    // Right X eye
+    canvas.drawLine(
+      Offset(center.dx + 1, center.dy - 3),
+      Offset(center.dx + 3, center.dy - 1),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(center.dx + 3, center.dy - 3),
+      Offset(center.dx + 1, center.dy - 1),
+      paint,
+    );
+
+    // Sad mouth
+    paint.color = Colors.white;
+    paint.style = PaintingStyle.stroke;
+    paint.strokeWidth = 1.5;
+    canvas.drawArc(
+      Rect.fromCenter(center: center, width: 8, height: 8),
+      3.14,
+      3.14,
+      false,
+      paint,
+    );
+
+    // Legs (shaking)
+    paint.color = Colors.red;
+    paint.style = PaintingStyle.fill;
+    final shakeOffset = (Math.sin(_animationTime * 20) * 1).toDouble();
+
+    canvas.drawRect(
+      Rect.fromCenter(
+          center: Offset(center.dx - 3 + shakeOffset, center.dy + 8), width: 2, height: 4),
+      paint,
+    );
+    canvas.drawRect(
+      Rect.fromCenter(
+          center: Offset(center.dx + 3 - shakeOffset, center.dy + 8), width: 2, height: 4),
+      paint,
+    );
+
+    // Arms (down)
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(center.dx - 6, center.dy + 2), width: 2, height: 3),
+      paint,
+    );
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(center.dx + 6, center.dy + 2), width: 2, height: 3),
+      paint,
+    );
   }
 }
