@@ -31,12 +31,14 @@ class GameOverMenu extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
           child: Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             color: Colors.black.withAlpha(100),
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 100),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 20, horizontal: 100),
                 child: Wrap(
                   direction: Axis.vertical,
                   crossAxisAlignment: WrapCrossAlignment.center,
@@ -51,7 +53,8 @@ class GameOverMenu extends StatelessWidget {
                       builder: (_, score, __) {
                         return Text(
                           'You Score: $score',
-                          style: const TextStyle(fontSize: 40, color: Colors.white),
+                          style: const TextStyle(
+                              fontSize: 40, color: Colors.white),
                         );
                       },
                     ),
@@ -62,12 +65,15 @@ class GameOverMenu extends StatelessWidget {
                         return Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.monetization_on, color: Colors.amber, size: 30),
+                            const Icon(Icons.monetization_on,
+                                color: Colors.amber, size: 30),
                             const SizedBox(width: 8),
                             Text(
                               '$coins',
                               style: const TextStyle(
-                                  fontSize: 30, color: Colors.amber, fontWeight: FontWeight.bold),
+                                  fontSize: 30,
+                                  color: Colors.amber,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ],
                         );
@@ -86,6 +92,7 @@ class GameOverMenu extends StatelessWidget {
                             ),
                           ),
                           onPressed: () {
+                            game.playerData.lives = 3;
                             game.overlays.remove(GameOverMenu.id);
                             game.overlays.add(Hud.id);
                             game.resumeEngine();
@@ -111,7 +118,9 @@ class GameOverMenu extends StatelessWidget {
                                 ),
                                 ElevatedButton(
                                   style: ButtonStyle(
-                                    backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
+                                    backgroundColor:
+                                        WidgetStateProperty.all<Color>(
+                                            Colors.white),
                                   ),
                                   onPressed: playerData.coins >= 20
                                       ? () async {
@@ -119,33 +128,40 @@ class GameOverMenu extends StatelessWidget {
                                             // Save to Hive
                                             try {
                                               final playerDataBox =
-                                                  Hive.box<PlayerData>('DinoRun.PlayerDataBox');
+                                                  Hive.box<PlayerData>(
+                                                      'DinoRun.PlayerDataBox');
                                               await playerDataBox.put(
-                                                  'DinoRun.PlayerData', playerData);
+                                                  'DinoRun.PlayerData',
+                                                  playerData);
 
                                               // Update the game's PlayerData to reflect the changes
-                                              game.playerData.coins = playerData.coins;
+                                              game.playerData.coins =
+                                                  playerData.coins;
                                               game.playerData.notifyListeners();
                                             } catch (e) {
                                               print('Error saving to Hive: $e');
                                             }
 
-                                            game.overlays.remove(GameOverMenu.id);
+                                            // Remove game over overlay and show HUD
+                                            game.overlays
+                                                .remove(GameOverMenu.id);
                                             game.overlays.add(Hud.id);
+                                            // Restore lives and resume from current position
+                                            playerData.lives = 3;
                                             game.resumeEngine();
-                                            // Restore lives to continue the game
-                                            playerData.lives = 5;
                                             AudioManager.instance.resumeBgm();
                                           }
                                         }
                                       : () {
                                           // Navigate to purchase section
-                                          game.settingsReturnToOverlay = GameOverMenu.id;
+                                          game.settingsReturnToOverlay =
+                                              GameOverMenu.id;
                                           game.overlays.remove(GameOverMenu.id);
                                           game.overlays.add(SettingsMenu.id);
 
                                           // Show snackbar
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
                                             const SnackBar(
                                               content: Text(
                                                   'Not enough coins! Navigated to purchase section.'),
@@ -178,10 +194,11 @@ class GameOverMenu extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
-                        game.overlays.remove(GameOverMenu.id);
+                        game.overlays.clear(); // Clear all overlays first
                         game.overlays.add(MainMenu.id);
-                        game.resumeEngine();
                         game.reset();
+                        game.resumeEngine();
+                        game.playerData.lives = 3; // Reset lives for new game
                         AudioManager.instance.resumeBgm();
                       },
                     ),

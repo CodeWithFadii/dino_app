@@ -25,33 +25,33 @@ class AudioManager {
   // Starts the given audio file as BGM on loop.
   void startBgm(String fileName) {
     if (settings.bgm) {
-      FlameAudio.bgm.play(fileName, volume: 0.4);
+      // FlameAudio.bgm.play(fileName, volume: 0.4);
     }
   }
 
   // Pauses currently playing BGM if any.
   void pauseBgm() {
     if (settings.bgm) {
-      FlameAudio.bgm.pause();
+      // FlameAudio.bgm.pause();
     }
   }
 
   // Resumes currently paused BGM if any.
   void resumeBgm() {
     if (settings.bgm) {
-      FlameAudio.bgm.resume();
+      // FlameAudio.bgm.resume();
     }
   }
 
   // Stops currently playing BGM if any.
   void stopBgm() {
-    FlameAudio.bgm.stop();
+    // FlameAudio.bgm.stop();
   }
 
   // Plays the given audio file once.
   void playSfx(String fileName) {
     if (settings.sfx) {
-      FlameAudio.play(fileName);
+      // FlameAudio.play(fileName);
     }
   }
 }

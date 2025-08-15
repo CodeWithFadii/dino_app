@@ -55,12 +55,15 @@ class Hud extends StatelessWidget {
                     return Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.monetization_on, color: Colors.white, size: 20),
+                        const Icon(Icons.monetization_on,
+                            color: Colors.white, size: 20),
                         const SizedBox(width: 4),
                         Text(
                           '$coins',
                           style: const TextStyle(
-                              fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
                         ),
                       ],
                     );
@@ -81,7 +84,7 @@ class Hud extends StatelessWidget {
               selector: (_, playerData) => playerData.lives,
               builder: (_, lives, __) {
                 return Row(
-                  children: List.generate(5, (index) {
+                  children: List.generate(3, (index) {
                     if (index < lives) {
                       return const Icon(
                         Icons.favorite,

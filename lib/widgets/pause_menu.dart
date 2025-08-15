@@ -69,6 +69,7 @@ class PauseMenu extends StatelessWidget {
                     ),
                     ElevatedButton(
                       onPressed: () {
+                        game.playerData.lives = 3;
                         game.overlays.remove(PauseMenu.id);
                         game.overlays.add(Hud.id);
                         game.resumeEngine();

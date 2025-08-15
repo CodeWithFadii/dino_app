@@ -12,11 +12,12 @@ class PlayerData extends ChangeNotifier with HiveObjectMixin {
   @HiveField(2)
   int coins = 0;
 
-  int _lives = 5;
+  int _lives = 3; // Changed from 5 to 3
 
   int get lives => _lives;
   set lives(int value) {
-    if (value <= 5 && value >= 0) {
+    if (value <= 3 && value >= 0) {
+      // Changed max value from 5 to 3
       _lives = value;
       notifyListeners();
     }
@@ -35,7 +36,7 @@ class PlayerData extends ChangeNotifier with HiveObjectMixin {
     notifyListeners();
     // Only save if this object is properly initialized in Hive
     if (isInBox) {
-    save();
+      save();
     }
   }
 

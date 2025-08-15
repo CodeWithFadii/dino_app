@@ -57,9 +57,8 @@ class SettingsMenu extends StatelessWidget {
                       Hive.box<PlayerData>('DinoRun.PlayerDataBox');
                   await playerDataBox.put('DinoRun.PlayerData', playerData);
 
-                  // Update the game's PlayerData to reflect the changes
-                  game.playerData.coins = playerData.coins;
-                  game.playerData.notifyListeners();
+                  // Update the game's PlayerData to add the new coins
+                  game.playerData.addCoins(coins);
                 } catch (e) {
                   print('Error saving to Hive: $e');
                 }
@@ -186,9 +185,9 @@ class SettingsMenu extends StatelessWidget {
                         ),
                         const Text(
                           'Purchase Coins',
-                            style: TextStyle(
+                          style: TextStyle(
                             fontSize: 25,
-                              color: Colors.white,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
