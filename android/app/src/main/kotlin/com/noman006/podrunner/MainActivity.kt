@@ -1,4 +1,4 @@
-package com.example.dino_app
+package com.noman006.podrunner
 
 import io.flutter.embedding.android.FlutterActivity
 
