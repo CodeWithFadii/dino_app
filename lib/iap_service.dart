@@ -122,7 +122,7 @@ class InAppPurchaseService {
 
   Future<bool> buy(ProductDetails product) async {
     final param = PurchaseParam(productDetails: product);
-    return await _iap.buyConsumable(purchaseParam: param, autoConsume: false);
+    return await _iap.buyConsumable(purchaseParam: param, autoConsume: true);
   }
 
   Future<void> restore() async {
